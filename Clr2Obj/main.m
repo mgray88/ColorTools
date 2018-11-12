@@ -60,7 +60,12 @@ int main(int argc, const char *argv[]) {
 
         if (error) {
             NSLog(@"Cannot load UIColorCategory.template, will use default. Error: %@", error);
-            template = @"#import \"%CATEGORYHEADER%\"\n\n@implementation UIColor (%CATEGORY%)\n%COLORLIST%\n@end";
+            template =
+            @"// WARNING: Do not modify. This file is machine-generated.\n\n"
+            @"#import \"%CATEGORYHEADER%\"\n\n"
+            @"@implementation UIColor (%CATEGORY%)\n\n"
+            @"%COLORLIST%"
+            @"@end";
         }
         template = [template stringByReplacingOccurrencesOfString:@"%CATEGORYHEADER%" withString:categoryHeaderFileName];
 
@@ -69,21 +74,34 @@ int main(int argc, const char *argv[]) {
 
         if (error) {
             NSLog(@"Cannot load UIColorCategoryHeader.template, will use default. Error: %@", error);
-            headerTemplate = @"#import <UIKit/UIKit.h>\n@interface UIColor (%CATEGORY%)\n%COLORLIST%\n@end";
+            headerTemplate =
+            @"// WARNING: Do not modify. This file is machine-generated.\n\n"
+            @"#import <UIKit/UIKit.h>\n\n"
+            @"@interface UIColor (%CATEGORY%)\n\n"
+            @"%COLORLIST%\n"
+            @"@end";
         }
 
         template = [template stringByReplacingOccurrencesOfString:@"%CATEGORY%" withString:categoryName];
         headerTemplate = [headerTemplate stringByReplacingOccurrencesOfString:@"%CATEGORY%" withString:categoryName];
 
-        NSString *declTemplate = @"+ (UIColor *) %COLORNAME%;\n";
-        NSString *definTemplate = @"+ (UIColor *) %COLORNAME% {\n    return [UIColor colorWithRed:%f green:%f blue:%f alpha:%f];\n}\n\n";
+        NSString *declTemplate = @"@property (class, readonly, nonatomic) UIColor *%COLORNAME%;\n";
+        NSString *definTemplate =
+        @"+ (UIColor *)%COLORNAME% {\n"
+        @"    static dispatch_once_t once;\n"
+        @"    static UIColor *color;\n"
+        @"    dispatch_once(&once, ^{\n"
+        @"        color = [UIColor colorWithRed:%f green:%f blue:%f alpha:%f];\n"
+        @"    });\n"
+        @"    return color;\n"
+        @"}\n\n";
 
         NSString *allDeclarations = @"";
         NSString *allDefinitions = @"";
         for (NSString *colorName in list.allKeys) {
             NSColor *color = [list colorWithKey:colorName];
-            NSString *declaration = [declTemplate stringByReplacingOccurrencesOfString:@"%COLORNAME%" withString:[colorName camelCasedString]];
-            NSString *definition = [definTemplate stringByReplacingOccurrencesOfString:@"%COLORNAME%" withString:[colorName camelCasedString]];
+            NSString *declaration = [declTemplate stringByReplacingOccurrencesOfString:@"%COLORNAME%" withString:[colorName fullyCasedString]];
+            NSString *definition = [definTemplate stringByReplacingOccurrencesOfString:@"%COLORNAME%" withString:[colorName fullyCasedString]];
             definition = [NSString stringWithFormat:definition, color.redComponent, color.greenComponent, color.blueComponent, color.alphaComponent];
 
             allDeclarations = [allDeclarations stringByAppendingString:declaration];
