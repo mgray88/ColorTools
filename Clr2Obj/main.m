@@ -21,7 +21,9 @@ int main(int argc, const char *argv[]) {
         }
 
         if (argc > 1) {
-            file = [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
+            file = [[NSString stringWithCString:argv[1]
+                                       encoding:NSUTF8StringEncoding]
+                    stringByExpandingTildeInPath];
             NSString *baseName = [file lastPathComponent];
 
             if ([[[file pathExtension] uppercaseString] isEqualToString:@"CLR"]) {
