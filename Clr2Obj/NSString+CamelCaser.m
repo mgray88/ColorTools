@@ -40,6 +40,7 @@
 }
 
 - (NSString *) fullyCasedString {
-    return [[self camelCasedString] capitalizedString];
+    NSString *camelCased = [self camelCasedString];
+    return [[[camelCased substringToIndex:1] capitalizedString] stringByAppendingString:[camelCased substringFromIndex:1]];
 }
 @end
